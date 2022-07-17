@@ -14,10 +14,15 @@ const errorHandlerMiddleware = require("./middleware/error-handler");
 //databse imports
 const connectDb = require("./db/connect");
 
+//routers
+const authRouter = require("./routes/auth-router");
+
 //routes
 app.get("/", (req, res) => {
   res.send("Hello");
 });
+
+app.use("/api/v1/auth", authRouter);
 
 // error handler
 app.use(notFoundMiddleware);
