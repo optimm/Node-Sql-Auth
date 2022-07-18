@@ -1,4 +1,6 @@
 const db = require("../db/db");
+const bcrypt = require("bcryptjs");
+const jwt = require("jsonwebtoken");
 const { BadRequestError, UnauthenticatedError } = require("../errors");
 
 class Customer {
@@ -14,7 +16,9 @@ class Customer {
 
     const sql = "INSERT INTO customer (name,email,password) VALUES (?,?,?)";
     try {
-      const [userSave, _] = await db.query(sql, [name, email, password]);
+      const salt = await bcrypt.genSalt(10);
+      const hashedPass = await bcrypt.hash(password, salt);
+      const [userSave, _] = await db.query(sql, [name, email, hashedPass]);
       return {
         error: false,
         success: true,
@@ -47,6 +51,7 @@ class Customer {
           "Invalid Credentials, Please Check Email"
         );
       }
+
       if (data.password !== password) {
         throw new UnauthenticatedError("Incorrect Password!");
       }
