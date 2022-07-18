@@ -34,10 +34,7 @@ class Customer {
       throw error;
     }
   }
-  async hashPassword() {
-    const salt = await bcrypt.genSalt(10);
-    this.password = await bcrypt.hash(this.password, salt);
-  }
+
   async get() {
     const sql = "SELECT * FROM customer WHERE email=?";
     try {
@@ -61,19 +58,36 @@ class Customer {
           "Invalid Credentials, Please Check Email"
         );
       }
-      const ismatch = await bcrypt.compare(this.password, data.password);
+      this.name = data.name;
+      const ismatch = await this.matchPassword({
+        originalPassword: data.password,
+      });
       if (!ismatch) {
         throw new UnauthenticatedError("Incorrect Password!");
       }
-      const token = jwt.sign(
-        { email: this.email, name: data.name },
-        process.env.JWT_SECRET,
-        { expiresIn: "30d" }
-      );
+      const token = await this.generateToken();
       return { error: false, success: true, token };
     } catch (error) {
       throw error;
     }
+  }
+
+  async hashPassword() {
+    const salt = await bcrypt.genSalt(10);
+    this.password = await bcrypt.hash(this.password, salt);
+  }
+
+  async matchPassword({ originalPassword }) {
+    const ismatch = await bcrypt.compare(this.password, originalPassword);
+    return ismatch;
+  }
+
+  async generateToken() {
+    return jwt.sign(
+      { email: this.email, name: this.name },
+      process.env.JWT_SECRET,
+      { expiresIn: process.env.JWT_LIFETIME }
+    );
   }
 }
 
