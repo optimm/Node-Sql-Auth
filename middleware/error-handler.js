@@ -3,10 +3,12 @@ const errorHandlerMiddleware = (err, req, res, next) => {
   console.log("error bawa", err);
   let customError = {
     statusCode: err.statusCode || StatusCodes.INTERNAL_SERVER_ERROR,
-    msg: err.message || "Something went wrong please try again later",
+    message: err.message || "Something went wrong please try again later",
   };
 
-  return res.status(customError.statusCode).json({ msg: customError.msg });
+  return res
+    .status(customError.statusCode)
+    .json({ success: false, message: customError.message });
 };
 
 module.exports = errorHandlerMiddleware;

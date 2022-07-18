@@ -19,8 +19,8 @@ class Customer {
 
     const sql = "INSERT INTO customer (name,email,pass) VALUES (?,?,?)";
     try {
-      const userSave = await db.query(sql, [name, email, password]);
-      console.log(userSave);
+      const [userSave, _] = await db.query(sql, [name, email, password]);
+      return { success: true, message: "User Created Successfully" };
     } catch (error) {
       throw error;
     }

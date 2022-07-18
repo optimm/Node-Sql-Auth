@@ -8,15 +8,17 @@ const register = async (req, res, next) => {
   const { name, email, password } = req.body;
   const user = new Customer();
   try {
-    await user.save({ name, email, password });
-    res.status(StatusCodes.CREATED).json({ msg: "register" });
+    const saveRes = await user.save({ name, email, password });
+    res
+      .status(StatusCodes.CREATED)
+      .json({ success: saveRes.success, message: saveRes.success });
   } catch (error) {
     next(error);
   }
 };
 
 const login = async (req, res) => {
-  res.status(StatusCodes.OK).json({ msg: "login" });
+  res.status(StatusCodes.OK).json({ message: "login" });
 };
 
 module.exports = { register, login };
