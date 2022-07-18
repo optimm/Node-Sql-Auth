@@ -6,9 +6,9 @@ const Customer = require("../services/customerDbService");
 
 const register = async (req, res, next) => {
   const { name, email, password } = req.body;
-  const user = new Customer({ email, password });
+  const user = new Customer({ name, email, password });
   try {
-    const { error,success, message } = await user.save({ name, email, password });
+    const { error, success, message } = await user.save();
     res.status(StatusCodes.CREATED).json({ error, success, message });
   } catch (error) {
     next(error);
@@ -17,10 +17,10 @@ const register = async (req, res, next) => {
 
 const login = async (req, res, next) => {
   const { email, password } = req.body;
-  const user = new Customer();
+  const user = new Customer({ email, password });
   try {
-    const { error,success, data } = await user.login({ email, password });
-    res.status(StatusCodes.OK).json({ error, success, data });
+    const { error, success, token } = await user.login();
+    res.status(StatusCodes.OK).json({ error, success, token });
   } catch (error) {
     next(error);
   }
