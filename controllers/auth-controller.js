@@ -6,19 +6,24 @@ const Customer = require("../services/customerDbService");
 
 const register = async (req, res, next) => {
   const { name, email, password } = req.body;
-  const user = new Customer();
+  const user = new Customer({ email, password });
   try {
-    const saveRes = await user.save({ name, email, password });
-    res
-      .status(StatusCodes.CREATED)
-      .json({ success: saveRes.success, message: saveRes.message });
+    const { error,success, message } = await user.save({ name, email, password });
+    res.status(StatusCodes.CREATED).json({ error, success, message });
   } catch (error) {
     next(error);
   }
 };
 
-const login = async (req, res) => {
-  res.status(StatusCodes.OK).json({ message: "login" });
+const login = async (req, res, next) => {
+  const { email, password } = req.body;
+  const user = new Customer();
+  try {
+    const { error,success, data } = await user.login({ email, password });
+    res.status(StatusCodes.OK).json({ error, success, data });
+  } catch (error) {
+    next(error);
+  }
 };
 
 module.exports = { register, login };
