@@ -6,21 +6,17 @@ class Customer {
 
   async save({ name, email, password }) {
     console.log("hulalal", name, email, password);
-    if (
-      !name ||
-      !email ||
-      !password ||
-      email === "" ||
-      password === "" ||
-      name === ""
-    ) {
-      throw new BadRequestError("Please Provide Complete User Register Data!");
+    if (!name || !email || !password) {
+      throw new BadRequestError("Name, email, password are all required");
+    }
+    if (email === "" || password === "" || name === "") {
+      throw new BadRequestError("Name, email, password cannot be empty");
     }
 
-    const sql = "INSERT INTO customer (name,email,pass) VALUES (?,?,?)";
+    const sql = "INSERT INTO customer (name,email,password) VALUES (?,?,?)";
     try {
       const [userSave, _] = await db.query(sql, [name, email, password]);
-      return { success: true, message: "User Created Successfully" };
+      return { success: true, message: "User Registered Successfully" };
     } catch (error) {
       throw error;
     }

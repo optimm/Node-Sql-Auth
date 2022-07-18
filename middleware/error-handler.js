@@ -6,6 +6,10 @@ const errorHandlerMiddleware = (err, req, res, next) => {
     message: err.message || "Something went wrong please try again later",
   };
 
+  if (err.code && err.code === "ER_DUP_ENTRY") {
+    customError.message = "This email is already associated with an account";
+    customError.statusCode = StatusCodes.BAD_REQUEST;
+  }
   return res
     .status(customError.statusCode)
     .json({ success: false, message: customError.message });

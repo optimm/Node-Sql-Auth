@@ -11,7 +11,7 @@ const register = async (req, res, next) => {
     const saveRes = await user.save({ name, email, password });
     res
       .status(StatusCodes.CREATED)
-      .json({ success: saveRes.success, message: saveRes.success });
+      .json({ success: saveRes.success, message: saveRes.message });
   } catch (error) {
     next(error);
   }
