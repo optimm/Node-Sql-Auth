@@ -18,7 +18,9 @@ const auth = async (req, res, next) => {
     const user = new Customer({ email: payload.email, name: payload.name });
     const { data } = await user.get();
     if (!data) {
-      next(new UnauthenticatedError("Account Does Not Exists"));
+      next(
+        new UnauthenticatedError("Account Does Not Exists Or Token Is Invalid")
+      );
     }
     req.user = { email: payload.email, name: payload.name };
   } catch (error) {

@@ -51,7 +51,7 @@ const sendVerificationMail = async (req, res, next) => {
     await user.update({ verifyToken: token });
 
     const jwtToken = jwt.sign({ email: data.email }, process.env.JWT_SECRET, {
-      expiresIn: "60m",
+      expiresIn: "10s",
     });
 
     const url = `${process.env.FRONTEND_BASE_URL}/verify-user-email/${jwtToken}`;
@@ -83,25 +83,24 @@ const verifyEmail = async (req, res, next) => {
   try {
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
     if (!decoded || !decoded.email) {
-      next(new UnauthenticatedError("Invalid token"));
+      throw new UnauthenticatedError("Verification Failed On This Link");
     }
     const user = new Customer({ email: decoded.email });
     const { data } = await user.get();
     if (!data) {
-      next(new UnauthenticatedError("Account Does Not Exists"));
+      throw new UnauthenticatedError("Verification Failed On This Link");
     }
     if (data.verified) {
-      console.log("bhai log aaye");
-      next(new BadRequestError("User Already Verified"));
+      throw new BadRequestError("User Already Verified");
     }
-    await user.update({ verified: true });
+    await user.update({ verified: true, verifyToken: null });
     res.status(StatusCodes.OK).json({
       error: false,
       success: true,
       message: "User verified SuccessFully",
     });
   } catch (error) {
-    next(new UnauthenticatedError("Verification Failed"));
+    next(error);
   }
 };
 
