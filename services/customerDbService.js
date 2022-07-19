@@ -39,11 +39,7 @@ class Customer {
     const sql = "SELECT name,email,verified FROM customer WHERE email=?";
     try {
       const [[data], _] = await db.query(sql, [this.email]);
-      if (!data) {
-        throw new UnauthenticatedError(
-          "Invalid Credentials, Please Check Email"
-        );
-      }
+ 
       return { error: false, success: true, data };
     } catch (error) {
       throw error;

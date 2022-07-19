@@ -39,6 +39,9 @@ const sendVerificationMail = async (req, res, next) => {
   const user = new Customer({ email });
   try {
     const { data } = await user.get();
+    if (!data) {
+      throw new UnauthenticatedError("Account Does Not Exists");
+    }
 
     if (data.verified) {
       throw new BadRequestError("User Already Verified!");
@@ -47,7 +50,7 @@ const sendVerificationMail = async (req, res, next) => {
     const token = await bcrypt.hash(email, 10);
     await user.update({ verifyToken: token });
 
-    const jwtToken = jwt.sign({ email: this.email }, process.env.JWT_SECRET, {
+    const jwtToken = jwt.sign({ email: data.email }, process.env.JWT_SECRET, {
       expiresIn: "60m",
     });
 
@@ -78,8 +81,28 @@ const sendVerificationMail = async (req, res, next) => {
 const verifyEmail = async (req, res, next) => {
   const { token } = req.body;
   try {
+    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    if (!decoded || !decoded.email) {
+      next(new UnauthenticatedError("Invalid token"));
+    }
+    const user = new Customer({ email: decoded.email });
+    const { data } = await user.get();
+    if (!data) {
+      next(new UnauthenticatedError("Account Does Not Exists"));
+    }
+    if (data.verified) {
+      console.log("bhai log aaye");
+      next(new BadRequestError("User Already Verified"));
+    }
     await user.update({ verified: true });
-  } catch (error) {}
+    res.status(StatusCodes.OK).json({
+      error: false,
+      success: true,
+      message: "User verified SuccessFully",
+    });
+  } catch (error) {
+    next(new UnauthenticatedError("Verification Failed"));
+  }
 };
 
 const forgotPassword = async (req, res, next) => {
