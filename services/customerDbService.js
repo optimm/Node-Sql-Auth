@@ -36,15 +36,15 @@ class Customer {
   }
 
   async get() {
-    const sql = "SELECT * FROM customer WHERE email=?";
+    const sql = "SELECT name,email,verified FROM customer WHERE email=?";
     try {
-      const [userData, _] = await db.query(sql, [this.email]);
-      if (!userData || userData.length === 0) {
+      const [[data], _] = await db.query(sql, [this.email]);
+      if (!data) {
         throw new UnauthenticatedError(
           "Invalid Credentials, Please Check Email"
         );
       }
-      return { error: false, success: true, data: userData };
+      return { error: false, success: true, data };
     } catch (error) {
       throw error;
     }
@@ -67,6 +67,27 @@ class Customer {
       }
       const token = await this.generateToken();
       return { error: false, success: true, token };
+    } catch (error) {
+      throw error;
+    }
+  }
+
+  async update(obj) {
+    const fields = Object.keys(obj);
+    const values = Object.values(obj);
+    if (!fields || fields.length === 0 || !values || values.length === 0) {
+      throw new BadRequestError("No Field Choosen For Updating");
+    }
+    let fieldString = "";
+    for (let index = 0; index < fields.length; index++) {
+      fieldString +=
+        index === fields.length - 1
+          ? fields[index] + "=?"
+          : fields[index] + "=?,";
+    }
+    const sql = `Update customer SET ${fieldString} WHERE email=?`;
+    try {
+      await db.query(sql, [...values, this.email]);
     } catch (error) {
       throw error;
     }

@@ -26,4 +26,38 @@ const login = async (req, res, next) => {
   }
 };
 
-module.exports = { register, login };
+const verifyEmail = async (req, res, next) => {
+  const { email } = req.body;
+  const user = new Customer({ email });
+  try {
+    const { data } = await user.get();
+    if (data.verified) {
+      throw new BadRequestError("User Already Verified!");
+    }
+    await user.update({ verified: true });
+    res.status(StatusCodes.OK).json({
+      error: false,
+      success: true,
+      message: "User Verified Successfully",
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+const forgotPassword = async (req, res, next) => {
+  const { email } = req.body;
+  const user = new Customer({ email });
+
+  try {
+    const { data } = await user.get();
+    if (!data.verified) {
+      throw new UnauthenticatedError("User Not Verified");
+    }
+    
+  } catch (error) {
+    next(error);
+  }
+};
+
+module.exports = { register, login, verifyEmail };
