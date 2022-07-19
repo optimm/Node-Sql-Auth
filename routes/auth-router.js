@@ -6,10 +6,12 @@ const {
   register,
   login,
   verifyEmail,
+  sendVerificationMail,
 } = require("../controllers/auth-controller");
 
 router.route("/register").post(register);
 router.route("/login").post(login);
-router.route("/verifyemail").post(verifyEmail);
+router.route("/send-verification-mail").post(sendVerificationMail);
+router.route("/verify-email").post(verifyEmail);
 
 module.exports = router;
