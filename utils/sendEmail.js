@@ -25,7 +25,7 @@ const sendEmail = async (options) => {
   };
   try {
     let info = await transporter.sendMail(mailOptions);
-    console.log("Preview URL: %s", nodemailer.getTestMessageUrl(info));
+    return nodemailer.getTestMessageUrl(info);
   } catch (error) {
     throw error;
   }

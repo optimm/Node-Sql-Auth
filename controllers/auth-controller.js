@@ -13,6 +13,7 @@ const Customer = require("../services/customerDbService");
 const register = async (req, res, next) => {
   const { name, email, password } = req.body;
   const user = new Customer({ name, email, password });
+  const { data } = await user.get();
   try {
     const { error, success, message } = await user.save();
     res.status(StatusCodes.CREATED).json({ error, success, message });
@@ -53,24 +54,21 @@ const sendVerificationMail = async (req, res, next) => {
     const message = `<h1>Hello Please Verify Your Email Here</h1><a href=${url} clickTracking=off>${url}</a>`;
 
     try {
-      await sendEmail({
-        // to: data.email,
+      const emailUrl = await sendEmail({
+        to: data.email,
         subject: "Email Verification",
         text: message,
       });
+      res.status(StatusCodes.OK).json({
+        error: false,
+        success: true,
+        message: "Verification Email Sent SuccessFully!",
+        url: emailUrl,
+      });
     } catch (error) {
-      console.log("bhalo khalo", error);
-      next(error);
+      throw new CustomAPIError("Email could not be sent");
     }
-    console.log("bello");
-
-    res.status(StatusCodes.OK).json({
-      error: false,
-      success: true,
-      message: "Verification Email Sent SuccessFully!",
-    });
   } catch (error) {
-    console.log("hello galat");
     await user.update({ verifyToken: null });
     next(error);
   }
