@@ -1,4 +1,5 @@
 const nodemailer = require("nodemailer");
+const { CustomAPIError } = require("../errors");
 
 const sendEmail = async (options) => {
   let testAccount = {
@@ -22,14 +23,12 @@ const sendEmail = async (options) => {
     subject: options.subject,
     html: options.text,
   };
-  transporter.sendMail(mailOptions, function (error, info) {
-    if (error) {
-      throw error;
-    } else {
-      console.log(info);
-      console.log("Preview URL: %s", nodemailer.getTestMessageUrl(info));
-    }
-  });
+  try {
+    let info = await transporter.sendMail(mailOptions);
+    console.log("Preview URL: %s", nodemailer.getTestMessageUrl(info));
+  } catch (error) {
+    throw error;
+  }
 };
 
 module.exports = sendEmail;

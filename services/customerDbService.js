@@ -58,6 +58,9 @@ class Customer {
           "Invalid Credentials, Please Check Email"
         );
       }
+      if (!data.verified) {
+        throw new UnauthenticatedError("User Not Verified");
+      }
       this.name = data.name;
       const ismatch = await this.matchPassword({
         originalPassword: data.password,

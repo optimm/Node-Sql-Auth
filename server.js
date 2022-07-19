@@ -11,6 +11,9 @@ app.use(express.urlencoded({ extended: false }));
 const notFoundMiddleware = require("./middleware/not-found");
 const errorHandlerMiddleware = require("./middleware/error-handler");
 
+//authentication middleware
+const authMiddleware = require("./middleware/authentication");
+
 //extra security middlewares
 const helemt = require("helmet");
 const cors = require("cors");
@@ -22,6 +25,7 @@ const connectDb = require("./db/connect");
 
 //routers
 const authRouter = require("./routes/auth-router");
+const cartRouter = require("./routes/cart-router");
 
 app.set("trust proxy", 1);
 app.use(
@@ -39,7 +43,9 @@ app.get("/", (req, res) => {
   res.send("Hello");
 });
 
+//routes setup
 app.use("/api/v1/auth", authRouter);
+app.use("/api/v1/cart", authMiddleware, cartRouter);
 
 // error handler
 app.use(notFoundMiddleware);

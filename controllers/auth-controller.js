@@ -42,18 +42,25 @@ const sendVerificationMail = async (req, res, next) => {
       throw new BadRequestError("User Already Verified!");
     }
 
-    const url = "http://localhost:5000";
+    const token = await bcrypt.hash(email, 10);
+    await user.update({ verifyToken: token });
+
+    const jwtToken = jwt.sign({ email: this.email }, process.env.JWT_SECRET, {
+      expiresIn: "60m",
+    });
+
+    const url = `${process.env.FRONTEND_BASE_URL}/verify-user-email/${jwtToken}`;
     const message = `<h1>Hello Please Verify Your Email Here</h1><a href=${url} clickTracking=off>${url}</a>`;
 
     try {
       await sendEmail({
-        to: data.email,
+        // to: data.email,
         subject: "Email Verification",
         text: message,
       });
     } catch (error) {
-      console.log(error);
-      throw new CustomAPIError("Email Could Not be Sent");
+      console.log("bhalo khalo", error);
+      next(error);
     }
     console.log("bello");
 
@@ -63,6 +70,8 @@ const sendVerificationMail = async (req, res, next) => {
       message: "Verification Email Sent SuccessFully!",
     });
   } catch (error) {
+    console.log("hello galat");
+    await user.update({ verifyToken: null });
     next(error);
   }
 };
