@@ -1,5 +1,6 @@
 const jwt = require("jsonwebtoken");
 const { UnauthenticatedError } = require("../errors");
+const Customer = require("../services/customerDbService");
 
 const auth = (req, res, next) => {
   const authHeader = req.headers.authorization;
@@ -13,10 +14,12 @@ const auth = (req, res, next) => {
       throw new UnauthenticatedError("Authentication Invalid");
     }
     const user = new Customer({ email: payload.email, name: payload.name });
+    const { data } = user.get().catch((err) => {
+    });
+
     req.user = { email: payload.email, name: payload.name };
     console.log("i was in auth", payload.name);
   } catch (error) {
-    console.log(error);
     throw new UnauthenticatedError("Authentication Invalid");
   }
   next();

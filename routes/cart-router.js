@@ -11,7 +11,7 @@ const {
 
 router.route("/add-to-cart").post(AddtoCart);
 router.route("/delete-from-cart").post(DeleteFromCart);
-router.route("/get-cart").post(GetCart);
+router.route("/get-cart").get(GetCart);
 router.route("/clear-cart").post(ClearCart);
 
 module.exports = router;

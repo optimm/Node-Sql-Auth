@@ -13,7 +13,7 @@ const Customer = require("../services/customerDbService");
 const register = async (req, res, next) => {
   const { name, email, password } = req.body;
   const user = new Customer({ name, email, password });
-  const { data } = await user.get();
+
   try {
     const { error, success, message } = await user.save();
     res.status(StatusCodes.CREATED).json({ error, success, message });
@@ -35,6 +35,7 @@ const login = async (req, res, next) => {
 
 const sendVerificationMail = async (req, res, next) => {
   const { email } = req.body;
+
   const user = new Customer({ email });
   try {
     const { data } = await user.get();

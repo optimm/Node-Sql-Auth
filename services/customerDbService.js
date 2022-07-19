@@ -59,7 +59,7 @@ class Customer {
         );
       }
       if (!data.verified) {
-        throw new UnauthenticatedError("User Not Verified");
+        throw new UnauthenticatedError("User Not verified");
       }
       this.name = data.name;
       const ismatch = await this.matchPassword({
