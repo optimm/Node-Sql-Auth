@@ -1,0 +1,25 @@
+<!---NODE APP ENVIRONMENT VARIABLES-->
+
+NODE_ENV=development
+PORT=8000
+
+<!---DATABASE CONNECTION ENVIRONMENT VARIABLES-->
+
+DB_HOST=localhost
+DB_USER=root
+DB_NAME=auth
+
+<!---JWT VARIABLES-->
+
+JWT_SECRET=xyz
+JWT_LIFETIME=30d
+
+<!---EMAIL VARIABLES-->
+
+EMAIL_FROM=example@fg.com
+
+<!---FRONTEND VARIABLES-->
+
+FRONTEND_BASE_URL=http://localhost:7000
+FRONTEND_VERIFY_EMAIL_URL=http://localhost:7000/verify-email
+FRONTEND_PASSWORD_RESET_URL=http://localhost:7000/reset-password
