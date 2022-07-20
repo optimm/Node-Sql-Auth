@@ -5,26 +5,26 @@ const Customer = require("../services/customerDbService");
 const auth = async (req, res, next) => {
   const authHeader = req.headers.authorization;
   if (!authHeader || !authHeader.startsWith("Bearer ")) {
-    next(new UnauthenticatedError("Authentication Invalid"));
+    next(new UnauthenticatedError("Authentication invalid"));
   }
   const token = authHeader.split(" ")[1];
   try {
     const payload = jwt.verify(token, process.env.JWT_SECRET);
     if (!payload || !payload.email || !payload.name) {
       next(
-        new UnauthenticatedError("Authentication Invalid, Token Not Verified")
+        new UnauthenticatedError("Authentication invalid, token not verified")
       );
     }
     const user = new Customer({ email: payload.email, name: payload.name });
-    const { data } = await user.get();
+    const { data } = await user.getbyEmail();
     if (!data) {
       next(
-        new UnauthenticatedError("Account Does Not Exists Or Token Is Invalid")
+        new UnauthenticatedError("Account does not exists or token is invalid")
       );
     }
     req.user = { email: payload.email, name: payload.name };
   } catch (error) {
-    next(new UnauthenticatedError("Authentication Invalid"));
+    next(new UnauthenticatedError("Authentication invalid"));
   }
   next();
 };

@@ -35,11 +35,36 @@ class Customer {
     }
   }
 
-  async get() {
+  async Find(obj) {
+    const fields = Object.keys(obj);
+    const values = Object.values(obj);
+    if (!fields || fields.length === 0 || !values || values.length === 0) {
+      throw new BadRequestError("No field choosen for searching");
+    }
+    let fieldString = "";
+    for (let index = 0; index < fields.length; index++) {
+      fieldString +=
+        index === fields.length - 1
+          ? fields[index] + "=?"
+          : fields[index] + "=? AND";
+    }
+
+    const sql = `SELECT name,email,verified FROM customer WHERE ${fieldString}`;
+    try {
+      const [[data], _] = await db.query(sql, [...values]);
+      if (data) {
+        this.email = data.email;
+      }
+      return { error: false, success: true, data };
+    } catch (error) {
+      throw error;
+    }
+  }
+
+  async getbyEmail() {
     const sql = "SELECT name,email,verified FROM customer WHERE email=?";
     try {
       const [[data], _] = await db.query(sql, [this.email]);
- 
       return { error: false, success: true, data };
     } catch (error) {
       throw error;
@@ -51,18 +76,18 @@ class Customer {
       const [[data], _] = await db.query(sql, [this.email]);
       if (!data) {
         throw new UnauthenticatedError(
-          "Invalid Credentials, Please Check Email"
+          "No account is associated with this email"
         );
       }
       if (!data.verified) {
-        throw new UnauthenticatedError("User Not verified");
+        throw new UnauthenticatedError("User not verified");
       }
       this.name = data.name;
       const ismatch = await this.matchPassword({
         originalPassword: data.password,
       });
       if (!ismatch) {
-        throw new UnauthenticatedError("Incorrect Password!");
+        throw new UnauthenticatedError("Incorrect password!");
       }
       const token = await this.generateToken();
       return { error: false, success: true, token };
@@ -75,7 +100,7 @@ class Customer {
     const fields = Object.keys(obj);
     const values = Object.values(obj);
     if (!fields || fields.length === 0 || !values || values.length === 0) {
-      throw new BadRequestError("No Field Choosen For Updating");
+      throw new BadRequestError("No field choosen for updating");
     }
     let fieldString = "";
     for (let index = 0; index < fields.length; index++) {

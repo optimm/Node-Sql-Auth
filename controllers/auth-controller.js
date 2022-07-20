@@ -38,20 +38,22 @@ const sendVerificationMail = async (req, res, next) => {
 
   const user = new Customer({ email });
   try {
-    const { data } = await user.get();
+    const { data } = await user.getbyEmail();
     if (!data) {
-      throw new UnauthenticatedError("Account Does Not Exists");
+      throw new UnauthenticatedError(
+        "No account is associated with this email"
+      );
     }
 
     if (data.verified) {
-      throw new BadRequestError("User Already Verified!");
+      throw new BadRequestError("User already verified!");
     }
 
     const token = await bcrypt.hash(email, 10);
     await user.update({ verifyToken: token });
 
-    const jwtToken = jwt.sign({ email: data.email }, process.env.JWT_SECRET, {
-      expiresIn: "10s",
+    const jwtToken = jwt.sign({ verifyToken: token }, process.env.JWT_SECRET, {
+      expiresIn: "10m",
     });
 
     const url = `${process.env.FRONTEND_BASE_URL}/verify-user-email/${jwtToken}`;
@@ -66,7 +68,7 @@ const sendVerificationMail = async (req, res, next) => {
       res.status(StatusCodes.OK).json({
         error: false,
         success: true,
-        message: "Verification Email Sent SuccessFully!",
+        message: "Verification email sent successFully!",
         url: emailUrl,
       });
     } catch (error) {
@@ -80,24 +82,28 @@ const sendVerificationMail = async (req, res, next) => {
 
 const verifyEmail = async (req, res, next) => {
   const { token } = req.body;
+  const user = new Customer({});
   try {
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
-    if (!decoded || !decoded.email) {
-      throw new UnauthenticatedError("Verification Failed On This Link");
+    if (!decoded || !decoded.verifyToken) {
+      throw new UnauthenticatedError(
+        "Verification token invalid, please check the link"
+      );
     }
-    const user = new Customer({ email: decoded.email });
-    const { data } = await user.get();
+    const { data } = await user.Find({ verifyToken: decoded.token });
     if (!data) {
-      throw new UnauthenticatedError("Verification Failed On This Link");
+      throw new UnauthenticatedError(
+        "Verification token invalid, please check the link"
+      );
     }
     if (data.verified) {
-      throw new BadRequestError("User Already Verified");
+      throw new BadRequestError("User already verified");
     }
     await user.update({ verified: true, verifyToken: null });
     res.status(StatusCodes.OK).json({
       error: false,
       success: true,
-      message: "User verified SuccessFully",
+      message: "user verified successFully",
     });
   } catch (error) {
     next(error);
@@ -107,15 +113,6 @@ const verifyEmail = async (req, res, next) => {
 const forgotPassword = async (req, res, next) => {
   const { email } = req.body;
   const user = new Customer({ email });
-
-  try {
-    const { data } = await user.get();
-    if (!data.verified) {
-      throw new UnauthenticatedError("User Not Verified");
-    }
-  } catch (error) {
-    next(error);
-  }
 };
 
 module.exports = { register, login, verifyEmail, sendVerificationMail };

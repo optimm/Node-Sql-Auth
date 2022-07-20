@@ -7,19 +7,19 @@ const errorHandlerMiddleware = (err, req, res, next) => {
   };
 
   if (err.code && err.code === "ER_DUP_ENTRY") {
-    customError.message = "This Email Is Already Associated With An Account";
+    customError.message = "This email is already associated with an account";
     customError.statusCode = StatusCodes.BAD_REQUEST;
   } else if (err.code && err.code === "ER_PARSE_ERROR") {
-    customError.message = `Invalid Sql Query : ${err.sql}`;
+    customError.message = `Invalid sql query : ${err.sql}`;
     customError.statusCode = StatusCodes.INTERNAL_SERVER_ERROR;
   } else if (err.code && err.code === "ER_BAD_FIELD_ERROR") {
-    customError.message = `${err.sqlMessage} , Invalid Sql Query : ${err.sql}`;
+    customError.message = `${err.sqlMessage} , invalid sql query : ${err.sql}`;
     customError.statusCode = StatusCodes.INTERNAL_SERVER_ERROR;
   } else if (err.code && err.code === "ER_TRUNCATED_WRONG_VALUE_FOR_FIELD") {
-    customError.message = `Invalid Payload`;
+    customError.message = `Invalid payload`;
     customError.statusCode = StatusCodes.BAD_REQUEST;
   } else if (err.message && err.message === "jwt expired") {
-    customError.message = `This Link Has Expired`;
+    customError.message = `This link has expired`;
     customError.statusCode = StatusCodes.BAD_REQUEST;
   }
   return res
