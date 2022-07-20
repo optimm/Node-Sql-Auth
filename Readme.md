@@ -1,5 +1,14 @@
 ## Authentication Api for Nodejs and Mysql
 
+### Features
+- Register
+- Send Verification Email
+- Verify User Email
+- Login user
+- Protect Routes
+- Send Email For Resetting Password When Forgot Password
+- Reset Password
+
 #### Technologies used
 - Node js
 - My Sql
