@@ -12,11 +12,11 @@ class Customer {
 
   async save() {
     if (!this.name || !this.email || !this.password) {
-      throw new BadRequestError("Name, Email, Password Are All Required");
+      throw new BadRequestError(
+        "Payload Invalid. Name, Email, Password Are All Required"
+      );
     }
-    if (this.email === "" || this.password === "" || this.name === "") {
-      throw new BadRequestError("Name, Email, Password Cannot Be Empty");
-    }
+
     const sql = "INSERT INTO customer (name,email,password) VALUES (?,?,?)";
     try {
       await this.hashPassword();
@@ -50,11 +50,13 @@ class Customer {
     }
 
     const sql = `SELECT name,email,verified FROM customer WHERE ${fieldString}`;
+    console.log(fieldString, sql);
     try {
       const [[data], _] = await db.query(sql, [...values]);
       if (data) {
         this.email = data.email;
       }
+      console.log("sads", data);
       return { error: false, success: true, data };
     } catch (error) {
       throw error;
@@ -62,7 +64,8 @@ class Customer {
   }
 
   async getbyEmail() {
-    const sql = "SELECT name,email,verified FROM customer WHERE email=?";
+    const sql =
+      "SELECT name,email,verified,verifyToken FROM customer WHERE email=?";
     try {
       const [[data], _] = await db.query(sql, [this.email]);
       return { error: false, success: true, data };

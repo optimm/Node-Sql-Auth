@@ -11,9 +11,7 @@ const auth = async (req, res, next) => {
   try {
     const payload = jwt.verify(token, process.env.JWT_SECRET);
     if (!payload || !payload.email || !payload.name) {
-      next(
-        new UnauthenticatedError("Authentication invalid, token not verified")
-      );
+      next(new UnauthenticatedError("Authentication invalid"));
     }
     const user = new Customer({ email: payload.email, name: payload.name });
     const { data } = await user.getbyEmail();
@@ -24,6 +22,9 @@ const auth = async (req, res, next) => {
     }
     req.user = { email: payload.email, name: payload.name };
   } catch (error) {
+    if (error.message && error.message === "jwt expired") {
+      next(new UnauthenticatedError("Login session timed out"));
+    }
     next(new UnauthenticatedError("Authentication invalid"));
   }
   next();

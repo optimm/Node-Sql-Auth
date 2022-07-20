@@ -50,11 +50,16 @@ const sendVerificationMail = async (req, res, next) => {
     }
 
     const token = await bcrypt.hash(email, 10);
+
     await user.update({ verifyToken: token });
 
-    const jwtToken = jwt.sign({ verifyToken: token }, process.env.JWT_SECRET, {
-      expiresIn: "10m",
-    });
+    const jwtToken = jwt.sign(
+      { email, verifyToken: token },
+      process.env.JWT_SECRET,
+      {
+        expiresIn: "60m",
+      }
+    );
 
     const url = `${process.env.FRONTEND_BASE_URL}/verify-user-email/${jwtToken}`;
     const message = `<h1>Hello Please Verify Your Email Here</h1><a href=${url} clickTracking=off>${url}</a>`;
@@ -69,7 +74,7 @@ const sendVerificationMail = async (req, res, next) => {
         error: false,
         success: true,
         message: "Verification email sent successFully!",
-        url: emailUrl,
+        token: jwtToken,
       });
     } catch (error) {
       throw new CustomAPIError("Email could not be sent");
@@ -82,23 +87,25 @@ const sendVerificationMail = async (req, res, next) => {
 
 const verifyEmail = async (req, res, next) => {
   const { token } = req.body;
-  const user = new Customer({});
   try {
-    const decoded = jwt.verify(token, process.env.JWT_SECRET);
-    if (!decoded || !decoded.verifyToken) {
+    const { email, verifyToken } = jwt.verify(token, process.env.JWT_SECRET);
+    if (!verifyToken || !email) {
       throw new UnauthenticatedError(
         "Verification token invalid, please check the link"
       );
     }
-    const { data } = await user.Find({ verifyToken: decoded.token });
+    const user = new Customer({ email });
+    const { data } = await user.getbyEmail();
     if (!data) {
-      throw new UnauthenticatedError(
-        "Verification token invalid, please check the link"
-      );
+      throw error;
     }
     if (data.verified) {
-      throw new BadRequestError("User already verified");
+      next(new BadRequestError("User already verified"));
     }
+    if (data.verifyToken !== verifyToken) {
+      throw error;
+    }
+
     await user.update({ verified: true, verifyToken: null });
     res.status(StatusCodes.OK).json({
       error: false,
@@ -106,7 +113,15 @@ const verifyEmail = async (req, res, next) => {
       message: "user verified successFully",
     });
   } catch (error) {
-    next(error);
+    if (error.message && error.message === "jwt expired") {
+      next(error);
+    } else {
+      next(
+        new UnauthenticatedError(
+          "Verification token invalid, please check the link"
+        )
+      );
+    }
   }
 };
 
