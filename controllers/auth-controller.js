@@ -62,7 +62,7 @@ const sendVerificationMail = async (req, res, next) => {
     );
 
     const url = `${process.env.FRONTEND_BASE_URL}/verify-user-email/${jwtToken}`;
-    const message = `<h1>Hello Please Verify Your Email Here</h1><a href=${url} clickTracking=off>${url}</a>`;
+    const message = `<h1>Hello please follow this link to verify your email</h1><a href=${url} clickTracking=off>${url}</a><br><b>This link is valid for 10 minutes only<b>`;
 
     try {
       const emailUrl = await sendEmail({
@@ -75,6 +75,7 @@ const sendVerificationMail = async (req, res, next) => {
         success: true,
         message: "Verification email sent successFully!",
         token: jwtToken,
+        emailUrl,
       });
     } catch (error) {
       throw new CustomAPIError("Email could not be sent");
@@ -89,23 +90,22 @@ const verifyEmail = async (req, res, next) => {
   const { token } = req.params;
 
   try {
-    if (!token) throw new error();
-
+    if (!token) throw new CustomAPIError("Error");
     const { email, verifyToken } = jwt.verify(token, process.env.JWT_SECRET);
     if (!verifyToken || !email) {
-      throw new error();
+      throw new CustomAPIError("Error");
     }
 
     const user = new Customer({ email });
     const { data } = await user.getbyEmail();
     if (!data) {
-      throw new error();
+      throw new CustomAPIError("Error");
     }
     if (data.verified) {
       next(new BadRequestError("User already verified"));
     }
     if (data.verifyToken !== verifyToken) {
-      throw new error();
+      throw new CustomAPIError("Error");
     }
 
     await user.update({ verified: true, verifyToken: null });
@@ -118,14 +118,103 @@ const verifyEmail = async (req, res, next) => {
     if (error.message && error.message === "jwt expired") {
       next(error);
     } else {
-      next(new UnauthenticatedError("Verification token invalid, Hulle"));
+      next(new BadRequestError("Invalid Request, please check the link"));
     }
   }
 };
 
-const forgotPassword = async (req, res, next) => {
+const forgotPasswordEmail = async (req, res, next) => {
   const { email } = req.body;
   const user = new Customer({ email });
+  try {
+    const { data } = await user.getbyEmail();
+    if (!data) {
+      throw new UnauthenticatedError(
+        "No account is associated with this email"
+      );
+    }
+
+    const token = await bcrypt.hash(email, 10);
+    await user.update({ forgotPasswordToken: token });
+    const jwtToken = jwt.sign(
+      { email, forgotPasswordToken: token },
+      process.env.JWT_SECRET,
+      {
+        expiresIn: "10m",
+      }
+    );
+
+    const url = `${process.env.FRONTEND_BASE_URL}/forgot-password/${jwtToken}`;
+    const message = `<h1>Hello please follow this link to reset your password</h1><a href=${url} clickTracking=off>${url}</a><br><br><b>This link is valid for 10 minutes only<b>`;
+    try {
+      const emailUrl = await sendEmail({
+        to: data.email,
+        subject: "Reset Your Password",
+        text: message,
+      });
+      res.status(StatusCodes.OK).json({
+        error: false,
+        success: true,
+        message: "Email Sent Successfully",
+        token: jwtToken,
+        emailUrl,
+      });
+    } catch (error) {
+      throw new CustomAPIError("Email could not be sent");
+    }
+  } catch (error) {
+    await user.update({ forgotPasswordToken: null });
+    next(error);
+  }
 };
 
-module.exports = { register, login, verifyEmail, sendVerificationMail };
+const ResetPassword = async (req, res, next) => {
+  const { password } = req.body;
+  const { token } = req.params;
+
+  try {
+    if (!token) throw new CustomAPIError("Error");
+
+    const { email, forgotPasswordToken } = jwt.verify(
+      token,
+      process.env.JWT_SECRET
+    );
+    if (!forgotPasswordToken || !email) {
+      throw new CustomAPIError("Error");
+    }
+
+    const user = new Customer({ email });
+    const { data } = await user.getbyEmail();
+    if (!data) {
+      throw new CustomAPIError("Error");
+    }
+    console.log(data.forgotPasswordToken);
+    if (data.forgotPasswordToken !== forgotPasswordToken) {
+      throw new CustomAPIError("Error");
+    }
+    user.password = password;
+    await user.hashPassword();
+    await user.update({ password: user.password, forgotPasswordToken: null });
+
+    res.status(StatusCodes.OK).json({
+      error: false,
+      success: true,
+      message: "Password was reset successfully",
+    });
+  } catch (error) {
+    if (error.message && error.message === "jwt expired") {
+      next(error);
+    } else {
+      next(new BadRequestError("Invalid Request, please check the link"));
+    }
+  }
+};
+
+module.exports = {
+  register,
+  login,
+  verifyEmail,
+  sendVerificationMail,
+  forgotPasswordEmail,
+  ResetPassword,
+};
