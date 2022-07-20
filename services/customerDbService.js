@@ -10,6 +10,7 @@ class Customer {
     this.password = password;
   }
 
+  //saving user
   async save() {
     if (!this.name || !this.email || !this.password) {
       throw new BadRequestError(
@@ -35,6 +36,7 @@ class Customer {
     }
   }
 
+  //finding with respect to some properties
   async Find(obj) {
     const fields = Object.keys(obj);
     const values = Object.values(obj);
@@ -62,6 +64,7 @@ class Customer {
       throw error;
     }
   }
+  //finding with respect to email or primary key
 
   async getbyEmail() {
     const sql =
@@ -73,6 +76,8 @@ class Customer {
       throw error;
     }
   }
+
+  //logging the user in
   async login() {
     const sql = "SELECT * FROM customer WHERE email=?";
     try {
@@ -99,6 +104,7 @@ class Customer {
     }
   }
 
+  //updating properties
   async update(obj) {
     const fields = Object.keys(obj);
     const values = Object.values(obj);
@@ -120,16 +126,19 @@ class Customer {
     }
   }
 
+  //hasing the password
   async hashPassword() {
     const salt = await bcrypt.genSalt(10);
     this.password = await bcrypt.hash(this.password, salt);
   }
 
+  //matching the password
+
   async matchPassword({ originalPassword }) {
     const ismatch = await bcrypt.compare(this.password, originalPassword);
     return ismatch;
   }
-
+  //generating token for logging in
   async generateToken() {
     return jwt.sign(
       { email: this.email, name: this.name },
