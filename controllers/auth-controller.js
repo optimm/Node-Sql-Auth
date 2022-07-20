@@ -86,24 +86,26 @@ const sendVerificationMail = async (req, res, next) => {
 };
 
 const verifyEmail = async (req, res, next) => {
-  const { token } = req.body;
+  const { token } = req.params;
+
   try {
+    if (!token) throw new error();
+
     const { email, verifyToken } = jwt.verify(token, process.env.JWT_SECRET);
     if (!verifyToken || !email) {
-      throw new UnauthenticatedError(
-        "Verification token invalid, please check the link"
-      );
+      throw new error();
     }
+
     const user = new Customer({ email });
     const { data } = await user.getbyEmail();
     if (!data) {
-      throw error;
+      throw new error();
     }
     if (data.verified) {
       next(new BadRequestError("User already verified"));
     }
     if (data.verifyToken !== verifyToken) {
-      throw error;
+      throw new error();
     }
 
     await user.update({ verified: true, verifyToken: null });
@@ -116,11 +118,7 @@ const verifyEmail = async (req, res, next) => {
     if (error.message && error.message === "jwt expired") {
       next(error);
     } else {
-      next(
-        new UnauthenticatedError(
-          "Verification token invalid, please check the link"
-        )
-      );
+      next(new UnauthenticatedError("Verification token invalid, Hulle"));
     }
   }
 };

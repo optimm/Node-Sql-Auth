@@ -12,6 +12,6 @@ const {
 router.route("/register").post(register);
 router.route("/login").post(login);
 router.route("/send-verification-mail").post(sendVerificationMail);
-router.route("/verify-email").post(verifyEmail);
+router.route("/verify-email/:token").get(verifyEmail);
 
 module.exports = router;
