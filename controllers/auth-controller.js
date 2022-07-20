@@ -1,13 +1,17 @@
-const { StatusCodes } = require("http-status-codes");
 const {
   BadRequestError,
   UnauthenticatedError,
   CustomAPIError,
 } = require("../errors");
+
+//dependencies
+const { StatusCodes } = require("http-status-codes");
 const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
 const nodeMailer = require("nodemailer");
 const sendEmail = require("../utils/sendEmail");
+const { v4: uuidv4 } = require("uuid");
+//database service
 const Customer = require("../services/customerDbService");
 
 const register = async (req, res, next) => {
@@ -49,7 +53,7 @@ const sendVerificationMail = async (req, res, next) => {
       throw new BadRequestError("User already verified!");
     }
 
-    const token = await bcrypt.hash(email, 10);
+    const token = uuidv4();
 
     await user.update({ verifyToken: token });
 
@@ -61,7 +65,7 @@ const sendVerificationMail = async (req, res, next) => {
       }
     );
 
-    const url = `${process.env.FRONTEND_BASE_URL}/verify-user-email/${jwtToken}`;
+    const url = `${process.env.FRONTEND_VERIFY_EMAIL_URL}/${jwtToken}`;
     const message = `<h1>Hello please follow this link to verify your email</h1><a href=${url} clickTracking=off>${url}</a><br><b>This link is valid for 10 minutes only<b>`;
 
     try {
@@ -134,7 +138,7 @@ const forgotPasswordEmail = async (req, res, next) => {
       );
     }
 
-    const token = await bcrypt.hash(email, 10);
+    const token = uuidv4();
     await user.update({ forgotPasswordToken: token });
     const jwtToken = jwt.sign(
       { email, forgotPasswordToken: token },
@@ -144,7 +148,7 @@ const forgotPasswordEmail = async (req, res, next) => {
       }
     );
 
-    const url = `${process.env.FRONTEND_BASE_URL}/forgot-password/${jwtToken}`;
+    const url = `${process.env.FRONTEND_PASSWORD_RESET_URL}/${jwtToken}`;
     const message = `<h1>Hello please follow this link to reset your password</h1><a href=${url} clickTracking=off>${url}</a><br><br><b>This link is valid for 10 minutes only<b>`;
     try {
       const emailUrl = await sendEmail({
